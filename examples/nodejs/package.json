@@ -1,0 +1,16 @@
+{
+  "name": "bankid",
+  "version": "0.1.0",
+  "main": "bankid.js",
+  "author": "Filip Haglund",
+  "license": "MIT",
+  "scripts": {
+    "auth": "node bankid.js auth",
+    "sign": "node bankid.js sign",
+    "cancel": "node bankid.js cancel"
+  },
+  "dependencies": {
+    "await-to-js": "^2.1.1",
+    "axios": "^0.18.0"
+  }
+}

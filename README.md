@@ -3,12 +3,17 @@ These are instructions for integrating Swedish BankID that aim to be as _succinc
 
 For a complete reference, refer to the official documentation available at [bankid.com](https://www.bankid.com/bankid-i-dina-tjanster/rp-info).
 
-It's assumed that you are familiar with how BankID works from the users point of view. Armed with that knowledge, you should have all the important parts up and running within the hour. Let's go.
+It's assumed that you are familiar with how BankID works from the users point of view. Armed with that knowledge, you should have all the important parts up and running within a couple of hours. Let's go.
+
+## Obtaining a test BankID
+You will need a test BankID to be able to test your integration on the testing environment. As far as I know, you can't have both a test ID and your normal one installed on the same device, so you will need a dedicated testing device. For iOS you will use the regular client with some reconfiguring, but for Android you will have to install a custom APK that you can find [here](https://www.bankid.com/assets/bankid/rp/BankID_7.12.41.44_CUSTOMERTEST.apk).
+
+The instructions for installing the test identity can be found [here](https://www.bankid.com/assets/bankid/rp/how-to-get-bankid-for-test-v1.6.pdf). Complete this step before you move on with the guide.
 
 ## Setting up your request agent
 You have to configure your request agent to use the SSL certificate provided by BankID. The specifics of how to do that will depend on your environment.
 
-BankID provides a PFX file for use with the test environment, available [here](https://www.bankid.com/assets/bankid/rp/FPTestcert2_20150818_102329.pfx). Switching to production later is a matter of using a different file (that your issuing bank will provide).
+BankID provides a PFX file for use with the test environment, available [here](https://www.bankid.com/assets/bankid/rp/FPTestcert2_20150818_102329.pfx). The passphrase for this file is `qwerty123`. Switching to production later is a matter of using a different file (that your issuing bank will provide).
 
 The certificate authority files for the environments are:
 
@@ -25,8 +30,7 @@ MIIFvjCCA6agAwIBAgIITyTh/u1bExowDQYJKoZIhvcNAQENBQAwYjEkMCIGA1UECgwbRmluYW5zaWVs
 -----END CERTIFICATE-----
 </pre></p></details>
 
-### Examples
-- [Node.js/Axios](https://todo.com/test.js)
+All three of those files (pfx, prod ca, test ca) are included in this repo, in the `cert` folder.
 
 After you've configured the http agent, you're ready to start making API
 calls.
@@ -53,12 +57,35 @@ To initiate signing, use the `sign` endpoint.
 
 Name|Required|Example|Description
 -|-|-|-
-endUserIp|Yes|`213.112.83.16`
+endUserIp|Yes|`"213.112.83.16"`
 userVisibleData|Yes|`"SmFnIGludHlnYXIgYXR0IGphZyB2aWxsIHNrcml2YSBww6UgZG9rdW1lbnRldC4="`|Base64 encoded string containing the text you want the user to sign.
-personalNumber|Yes*|`198006211414`|See `auth`.
+personalNumber|Yes*|`"198006211414"`|See `auth`.
 requirement|No|`{}`|See `auth`.
 
 Making this call will trigger the signing flow in the users BankID app. 
+
+## Launching the native client
+The `auth` and `sign` calls return an `autoStartToken` that can be used to construct a url that can be launched on the users device and picked up by the BankID app, if it is installed.
+
+On iOS, the url should be constructed like this:
+```
+https://app.bankid.com/?autostarttoken=[AUTOSTART_TOKEN_HERE]&redirect=null
+```
+On any other device, use this format:
+```
+bankid:///?autostarttoken=[AUTOSTART_TOKEN_HERE]&redirect=null
+```
+
+According to the documentation, *the order of the query parameters matters*, so don't change it or add any other parameters.
+
+The brackets around the autoStartToken should be included. In other words, this is a valid url:
+```
+bankid:///?autostarttoken=[bdaccd84-6a98-4276-ba70-35e944b704af]&redirect=null
+```
+And this is *not*:
+```
+bankid:///?autostarttoken=bdaccd84-6a98-4276-ba70-35e944b704af&redirect=null
+```
 
 ## Polling for results
 Both the `sign` and `auth` endpoints return objects that contain the fields `autoStartToken` and `orderRef`. You will need to poll the `collect` method to retrieve the status of an ongoing operation.
@@ -73,5 +100,8 @@ If `status` is `complete` or `failed`, the flow has finished. For failed and pen
 ## Cancelling an ongoing order
 Call `cancel` with a single parameter – `orderRef`. Any ongoing orders must be cancelled before the user can start a new order.
 
-## Wrapping up
+## Tying it together
 Those four methods, `auth`, `sign`, `collect`, and `cancel` are all you need to get your integration working. Once you get this far though, you'll need to refer to the official docs to ensure you're in compliance with all of the specific requirements therein. For example, certain failstates require you to display specific error messages, and certain data must always be persisted to disk.
+
+## Examples
+- [Node.js + Axios](examples/nodejs)
