@@ -22,7 +22,7 @@ const configs = {
 
 const config = configs.test;
 
-// Create an axios instance that's configured to use the approprate
+// Create an axios instance that's configured to use the appropriate
 // certificates and always send the required headers
 const axios = axiosLib.create({
   httpsAgent: new https.Agent({
