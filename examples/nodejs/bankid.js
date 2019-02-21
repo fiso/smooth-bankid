@@ -43,10 +43,12 @@ async function call (method, params) {
   if (error) {
     // You will want to implement your own error handling here
     console.error('Error in call');
-    if (error.response && error.response.data && error.response.data.errorCode === 'alreadyInProgress') {
+    if (error.response && error.response.data) {
       console.error(error.response.data);
-      console.error('You would have had to call cancel on this orderRef before retrying');
-      console.error('The order should now have been automatically cancelled by this premature retry');
+      if (error.response.data.errorCode === 'alreadyInProgress') {
+        console.error('You would have had to call cancel on this orderRef before retrying');
+        console.error('The order should now have been automatically cancelled by this premature retry');
+      }
     }
     return {error};
   }
@@ -68,7 +70,7 @@ const auth = async (personalNumber, endUserIp, otherDevice) =>
   });
 
 // BankID method call sign
-const sign = async (personalNumber, text, endUserIp, otherDevice) =>
+const sign = async (personalNumber, endUserIp, text, otherDevice) =>
   await call('sign', {
     endUserIp,
     personalNumber,
@@ -103,7 +105,7 @@ const persistResult = bankIdResult =>
   //   bankIdResult.ocspResponse
   true;
 
-const authFlow = async (pnr, endUserIp, launchFn) =>
+const authFlow = (pnr, endUserIp, launchFn) =>
   new Promise(async (resolve, reject) => {
     const {autoStartToken, orderRef} = await auth(pnr, endUserIp);
     if (!autoStartToken || !orderRef) {
@@ -120,15 +122,15 @@ const authFlow = async (pnr, endUserIp, launchFn) =>
         resolve({ok: false, status: hintCode});
       } else if (status === 'complete') {
         clearInterval(interval);
-        resolve({ok: true, status: completionData});
         persistResult(completionData);
+        resolve({ok: true, status: completionData});
       } else {
         console.log(hintCode);
       }
     }, 2000);
   });
 
-const signFlow = async (pnr, endUserIp, text, launchFn) =>
+const signFlow = (pnr, endUserIp, text, launchFn) =>
   new Promise(async (resolve, reject) => {
     const {autoStartToken, orderRef} = await sign(pnr, endUserIp, text);
     if (!autoStartToken || !orderRef) {
@@ -145,8 +147,8 @@ const signFlow = async (pnr, endUserIp, text, launchFn) =>
         resolve({ok: false, status: hintCode});
       } else if (status === 'complete') {
         clearInterval(interval);
-        resolve({ok: true, status: completionData});
         persistResult(completionData);
+        resolve({ok: true, status: completionData});
       } else {
         console.log(hintCode);
       }
