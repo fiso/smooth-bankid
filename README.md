@@ -11,11 +11,11 @@ You will need a test BankID to be able to test your integration on the testing e
 The instructions for installing the test identity can be found [here](https://www.bankid.com/assets/bankid/rp/how-to-get-bankid-for-test-v1.6.pdf). Complete this step before you move on with the guide.
 
 ## Setting up your request agent
-You have to configure your request agent to use the SSL certificate provided by BankID. The specifics of how to do that will depend on your environment.
+You have to configure your request agent to use the client SSL certificate provided by BankID. The specifics of how to do that will depend on your environment.
 
-BankID provides a PFX file for use with the test environment, available [here](https://www.bankid.com/assets/bankid/rp/FPTestcert2_20150818_102329.pfx). The passphrase for this file is `qwerty123`. Switching to production later is a matter of using a different file (that your issuing bank will provide).
+BankID provides a certificate in PFX format for use with the test environment, available [here](https://www.bankid.com/assets/bankid/rp/FPTestcert2_20150818_102329.pfx). The passphrase for this file is `qwerty123`. Switching to production later is a matter of using a different file (that your issuing bank will provide).
 
-The certificate authority files for the environments are:
+The public keys that you will be using to validate the identity of the responding server are:
 
 <details><summary>Test</summary><p>
 <pre>
@@ -30,14 +30,13 @@ MIIFvjCCA6agAwIBAgIITyTh/u1bExowDQYJKoZIhvcNAQENBQAwYjEkMCIGA1UECgwbRmluYW5zaWVs
 -----END CERTIFICATE-----
 </pre></p></details>
 
-All three of those files (pfx, prod ca, test ca) are included in this repo, in the `cert` folder.
+All three of those files (pfx, prod key, test key) are included in this repo, in the `cert` folder.
 
-After you've configured the http agent, you're ready to start making API
-calls.
+After you've configured the http agent, you're ready to start making API calls.
 - All calls are made as HTTP POST
 - Must include the header `Content-Type: application/json`
-- All parameters should (unsurprisingly) be sent as JSON in the request body
-- For all the methods covered below, calling them is simply a matter of making a POST request to `BASE_URL/METHOD_NAME`
+- All parameters should be sent as JSON in the request body
+- For all the methods covered below, calling them is a matter of making a POST request to `BASE_URL/METHOD_NAME`
 
 The base URL for the test environment is `https://appapi2.test.bankid.com/rp/v5`, and production is located at `https://appapi2.bankid.com/rp/v5`. These may not be the most _current_ ones when you're reading this, but they should remain available indefinitely at the given locations.
 
