@@ -54,8 +54,8 @@ async function call (method, params) {
   return result.data;
 }
 
-// BankiID method call auth
-const auth = async (personalNumber, endUserIp = '127.0.0.1', otherDevice) =>
+// BankID method call auth
+const auth = async (personalNumber, endUserIp, otherDevice) =>
   await call('auth', {
     endUserIp,
     personalNumber,
@@ -67,8 +67,8 @@ const auth = async (personalNumber, endUserIp = '127.0.0.1', otherDevice) =>
     },
   });
 
-// BankiID method call sign
-const sign = async (personalNumber, text, endUserIp = '127.0.0.1', otherDevice) =>
+// BankID method call sign
+const sign = async (personalNumber, text, endUserIp, otherDevice) =>
   await call('sign', {
     endUserIp,
     personalNumber,
@@ -81,10 +81,10 @@ const sign = async (personalNumber, text, endUserIp = '127.0.0.1', otherDevice) 
     },
   });
 
-// BankiID method call collect
+// BankID method call collect
 const collect = async orderRef => await call('collect', {orderRef});
 
-// BankiID method call cancel
+// BankID method call cancel
 const cancel = async orderRef => await call('cancel', {orderRef});
 
 // Returns the appropriate urls to launch the native client on mobile devices
@@ -97,15 +97,15 @@ const launchUrls = autoStartToken =>
   )(`/?autostarttoken=[${autoStartToken}]&redirect=null`);
 
 const persistResult = bankIdResult => 
-        // FIXME - YOU MUST STORE:
-        //   bankIdResult.signature
-        //   bankIdResult.user
-        //   bankIdResult.ocspResponse
-        true;
+  // FIXME - YOU MUST STORE:
+  //   bankIdResult.signature
+  //   bankIdResult.user
+  //   bankIdResult.ocspResponse
+  true;
 
-const authFlow = async (pnr, launchFn) =>
+const authFlow = async (pnr, endUserIp, launchFn) =>
   new Promise(async (resolve, reject) => {
-    const {autoStartToken, orderRef} = await auth(pnr);
+    const {autoStartToken, orderRef} = await auth(pnr, endUserIp);
     if (!autoStartToken || !orderRef) {
       reject(new Error('Auth request failed'));
       return;
@@ -128,9 +128,9 @@ const authFlow = async (pnr, launchFn) =>
     }, 2000);
   });
 
-const signFlow = async (pnr, text, launchFn) =>
+const signFlow = async (pnr, endUserIp, text, launchFn) =>
   new Promise(async (resolve, reject) => {
-    const {autoStartToken, orderRef} = await sign(pnr, text);
+    const {autoStartToken, orderRef} = await sign(pnr, endUserIp, text);
     if (!autoStartToken || !orderRef) {
       reject(new Error('Sign request failed'));
       return;
@@ -175,14 +175,16 @@ if (runningAsScript) {
     console.log(`Flow started with orderRef ${orderRef}`);
     console.log(`FIXME: launch native app on ${url} or ${iosUrl}`);
   }
+
+  const dummyIp = '127.0.0.1';
   
   async function testAuth (pnr) {
-    const result = await authFlow(pnr, launchNativeApp);
+    const result = await authFlow(pnr, dummyIp, launchNativeApp);
     console.log(result.ok, result.status.user);
   }
   
-  async function testSign () {
-    const result = await signFlow(pnr, 'Test text for signing', launchNativeApp);
+  async function testSign (pnr) {
+    const result = await signFlow(pnr, dummyIp, 'Test text for signing', launchNativeApp);
     console.log(result.ok, result.status.user);
   }
 
