@@ -98,7 +98,7 @@ const launchUrls = autoStartToken =>
     })
   )(`/?autostarttoken=[${autoStartToken}]&redirect=null`);
 
-const persistResult = bankIdResult => 
+const persistResult = bankIdResult =>
   // FIXME - YOU MUST STORE:
   //   bankIdResult.signature
   //   bankIdResult.user
@@ -114,7 +114,7 @@ const authFlow = (pnr, endUserIp, launchFn) =>
     }
 
     launchFn && launchFn({...launchUrls(autoStartToken), orderRef});
-  
+
     const interval = setInterval(async () => {
       const {status, hintCode, completionData} = await collect(orderRef);
       if (status === 'failed') {
@@ -139,7 +139,7 @@ const signFlow = (pnr, endUserIp, text, launchFn) =>
     }
 
     launchFn && launchFn({...launchUrls(autoStartToken), orderRef});
-  
+
     const interval = setInterval(async () => {
       const {status, hintCode, completionData} = await collect(orderRef);
       if (status === 'failed') {
@@ -179,12 +179,12 @@ if (runningAsScript) {
   }
 
   const dummyIp = '127.0.0.1';
-  
+
   async function testAuth (pnr) {
     const result = await authFlow(pnr, dummyIp, launchNativeApp);
     console.log(result.ok, result.status.user);
   }
-  
+
   async function testSign (pnr) {
     const result = await signFlow(pnr, dummyIp, 'Test text for signing', launchNativeApp);
     console.log(result.ok, result.status.user);
@@ -193,7 +193,7 @@ if (runningAsScript) {
   ({
     auth: testAuth,
     sign: testSign,
-    cancel: cancel,
+    cancel,
   }[operation] || (_ => console.log(`Unknown operation ${operation}`)))(param);
 }
 
