@@ -103,4 +103,5 @@ Call `cancel` with a single parameter – `orderRef`. Any ongoing orders must be
 Those four methods, `auth`, `sign`, `collect`, and `cancel` are all you need to get your integration working. Once you get this far though, you'll need to refer to the official docs to ensure you're in compliance with all of the specific requirements therein. For example, certain failstates require you to display specific error messages, and certain data must always be persisted to disk.
 
 ## Examples
-- [Node.js + Axios](examples/nodejs)
+- [Node.js](examples/nodejs)
+- [Python](examples/python)
