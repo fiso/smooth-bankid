@@ -8,7 +8,7 @@ It's assumed that you are familiar with how BankID works from the users point of
 ## Obtaining a test BankID
 You will need a test BankID to be able to test your integration on the testing environment. As far as I know, you can't have both a test ID and your normal one installed on the same device, so you will need a dedicated testing device. For iOS you will use the regular client with some reconfiguring, but for Android you will have to install a custom APK that you can find [here](https://www.bankid.com/assets/bankid/rp/BankID_7.12.41.44_CUSTOMERTEST.apk).
 
-The instructions for installing the test identity can be found [here](https://www.bankid.com/assets/bankid/rp/how-to-get-bankid-for-test-v1.6.pdf). Complete this step before you move on with the guide.
+The instructions for installing the test identity can be found [here](https://www.bankid.com/assets/bankid/rp/how-to-get-bankid-for-test-v1.7.pdf). Complete this step before you move on with the guide.
 
 ## Setting up your request agent
 You have to configure your request agent to use the client SSL certificate provided by BankID. The specifics of how to do that will depend on your environment.
