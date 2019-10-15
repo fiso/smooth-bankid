@@ -105,36 +105,11 @@ const persistResult = bankIdResult =>
   //   bankIdResult.ocspResponse
   true;
 
-const authFlow = (pnr, endUserIp, launchFn) =>
+const flow = (apiCall, params, launchFn) =>
   new Promise(async (resolve, reject) => {
-    const {autoStartToken, orderRef} = await auth(pnr, endUserIp);
+    const {autoStartToken, orderRef} = await apiCall(...params);
     if (!autoStartToken || !orderRef) {
-      reject(new Error('Auth request failed'));
-      return;
-    }
-
-    launchFn && launchFn({...launchUrls(autoStartToken), orderRef});
-
-    const interval = setInterval(async () => {
-      const {status, hintCode, completionData} = await collect(orderRef);
-      if (status === 'failed') {
-        clearInterval(interval);
-        resolve({ok: false, status: hintCode});
-      } else if (status === 'complete') {
-        clearInterval(interval);
-        persistResult(completionData);
-        resolve({ok: true, status: completionData});
-      } else {
-        console.log(hintCode);
-      }
-    }, 2000);
-  });
-
-const signFlow = (pnr, endUserIp, text, launchFn) =>
-  new Promise(async (resolve, reject) => {
-    const {autoStartToken, orderRef} = await sign(pnr, endUserIp, text);
-    if (!autoStartToken || !orderRef) {
-      reject(new Error('Sign request failed'));
+      reject(new Error('Request failed'));
       return;
     }
 
@@ -181,12 +156,12 @@ if (runningAsScript) {
   const dummyIp = '127.0.0.1';
 
   async function testAuth (pnr) {
-    const result = await authFlow(pnr, dummyIp, launchNativeApp);
+    const result = await flow(auth, [pnr, dummyIp], launchNativeApp);
     console.log(result.ok, result.status.user);
   }
 
   async function testSign (pnr) {
-    const result = await signFlow(pnr, dummyIp, 'Test text for signing', launchNativeApp);
+    const result = await flow(sign, [pnr, dummyIp, 'Test text for signing'], launchNativeApp);
     console.log(result.ok, result.status.user);
   }
 
@@ -198,7 +173,9 @@ if (runningAsScript) {
 }
 
 module.exports = {
-  authFlow,
-  signFlow,
+  auth,
+  sign,
+  collect,
   cancel,
+  flow,
 };
