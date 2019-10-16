@@ -105,30 +105,27 @@ const persistResult = bankIdResult =>
   //   bankIdResult.ocspResponse
   true;
 
-const flow = (apiCall, params, launchFn) =>
-  new Promise(async (resolve, reject) => {
-    const {autoStartToken, orderRef} = await apiCall(...params);
-    if (!autoStartToken || !orderRef) {
-      reject(new Error('Request failed'));
-      return;
+const flow = async (apiCall, params, launchFn) => {
+  const {autoStartToken, orderRef} = await apiCall(...params);
+  if (!autoStartToken || !orderRef) {
+    throw new Error('Request failed');
+  }
+
+  launchFn && launchFn({...launchUrls(autoStartToken), orderRef});
+
+  while (true) {
+    const {status, hintCode, completionData} = await collect(orderRef);
+    if (status === 'failed') {
+      return {ok: false, status: hintCode};
+    } else if (status === 'complete') {
+      persistResult(completionData);
+      return {ok: true, status: completionData};
+    } else {
+      console.log(hintCode);
     }
-
-    launchFn && launchFn({...launchUrls(autoStartToken), orderRef});
-
-    const interval = setInterval(async () => {
-      const {status, hintCode, completionData} = await collect(orderRef);
-      if (status === 'failed') {
-        clearInterval(interval);
-        resolve({ok: false, status: hintCode});
-      } else if (status === 'complete') {
-        clearInterval(interval);
-        persistResult(completionData);
-        resolve({ok: true, status: completionData});
-      } else {
-        console.log(hintCode);
-      }
-    }, 2000);
-  });
+    await new Promise(resolve => setTimeout(resolve, 2000));
+  }
+};
 
 const runningAsScript = !module.parent;
 
