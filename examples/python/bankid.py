@@ -65,6 +65,7 @@ class SetInterval:
 def call(method, params):
     with pfx_to_pem(config['pfx'], config['passphrase']) as cert:
         r = requests.post(config['bankIdUrl'] + '/' + method, cert=cert, json=params, verify=config['ca'])
+
     return r.json()
 
 def auth(pnr, end_user_ip, other_device = False) :
@@ -204,9 +205,12 @@ pnr_or_order_ref = sys.argv[2]
 
 launch_native_app = lambda launch_info: print('TODO: Launch native app ' + json.dumps(launch_info))
 
-if operation == 'auth':
-    auth_flow(pnr_or_order_ref, '123.123.123.123', launch_native_app)
-elif operation == 'sign':
-    sign_flow(pnr_or_order_ref, '123.123.123.123', 'Test text for signing', launch_native_app)
-elif operation == 'cancel':
-    cancel(pnr_or_order_ref)
+try:
+    if operation == 'auth':
+        auth_flow(pnr_or_order_ref, '123.123.123.123', launch_native_app)
+    elif operation == 'sign':
+        sign_flow(pnr_or_order_ref, '123.123.123.123', 'Test text for signing', launch_native_app)
+    elif operation == 'cancel':
+        cancel(pnr_or_order_ref)
+except ValueError as e:
+    print(e)
