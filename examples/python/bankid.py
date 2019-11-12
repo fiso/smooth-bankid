@@ -119,11 +119,11 @@ def persist_result(bank_id_result):
     #   bank_id_result.ocspResponse
     pass
 
-def auth_flow(pnr, end_user_ip, launch_fn):
-    r = auth(pnr, end_user_ip)
+def flow(api_call, params, launch_fn):
+    r = api_call(*params)
     if not 'autoStartToken' in r or not 'orderRef' in r:
         print(r)
-        raise ValueError('Auth request failed')
+        raise ValueError('Request failed')
 
     auto_start_token = r['autoStartToken']
     order_ref = r['orderRef']
@@ -140,12 +140,12 @@ def auth_flow(pnr, end_user_ip, launch_fn):
         r = collect(order_ref)
         if r['status'] == 'failed':
             interval.cancel()
-            print('Authorization failed')
+            print('Flow failed')
             print(r['hintCode'])
         elif r['status'] == 'complete':
             interval.cancel()
             persist_result(r)
-            print('Authorization successful')
+            print('Flow completed')
             print(r['completionData']['user'])
             print(r['completionData']['device'])
         else:
@@ -153,64 +153,31 @@ def auth_flow(pnr, end_user_ip, launch_fn):
 
     interval = SetInterval(2, poll)
 
-def sign_flow(pnr, end_user_ip, text, launch_fn):
-    r = sign(pnr, end_user_ip, text)
-    if not 'autoStartToken' in r or not 'orderRef' in r:
-        print(r)
-        raise ValueError('Sign request failed')
+if __name__ == "__main__":
+    def usage():
+        print('Usage: %s [operation] [param]' % sys.argv[0])
+        print('       operation can be one of (auth, sign, cancel)')
+        print('       for auth and sign, param must be a Swedish personnummer')
+        print('       for cancel, param must be an orderRef previously started by auth or sign')
+        sys.exit()
 
-    auto_start_token = r['autoStartToken']
-    order_ref = r['orderRef']
+    if len(sys.argv) < 3:
+        usage()
 
-    if launch_fn:
-        urls = launch_urls(auto_start_token)
-        launch_fn({
-            'url': urls['url'],
-            'iosUrl': urls['iosUrl'],
-            'orderRef': order_ref
-        })
+    operation = sys.argv[1]
+    if operation not in ['auth', 'sign', 'cancel']:
+        usage()
 
-    def poll():
-        r = collect(order_ref)
-        if r['status'] == 'failed':
-            interval.cancel()
-            print('Signing failed')
-            print(r['hintCode'])
-        elif r['status'] == 'complete':
-            interval.cancel()
-            persist_result(r)
-            print('Signing successful')
-            print(r['completionData']['user'])
-            print(r['completionData']['device'])
-        else:
-            print(r['hintCode'])
+    pnr_or_order_ref = sys.argv[2]
 
-    interval = SetInterval(2, poll)
+    launch_native_app = lambda launch_info: print('TODO: Launch native app ' + json.dumps(launch_info))
 
-def usage():
-    print('Usage: %s [operation] [param]' % sys.argv[0])
-    print('       operation can be one of (auth, sign, cancel)')
-    print('       for auth and sign, param must be a Swedish personnummer')
-    print('       for cancel, param must be an orderRef previously started by auth or sign')
-    sys.exit()
-
-if len(sys.argv) < 3:
-    usage()
-
-operation = sys.argv[1]
-if operation not in ['auth', 'sign', 'cancel']:
-    usage()
-
-pnr_or_order_ref = sys.argv[2]
-
-launch_native_app = lambda launch_info: print('TODO: Launch native app ' + json.dumps(launch_info))
-
-try:
-    if operation == 'auth':
-        auth_flow(pnr_or_order_ref, '123.123.123.123', launch_native_app)
-    elif operation == 'sign':
-        sign_flow(pnr_or_order_ref, '123.123.123.123', 'Test text for signing', launch_native_app)
-    elif operation == 'cancel':
-        cancel(pnr_or_order_ref)
-except ValueError as e:
-    print(e)
+    try:
+        if operation == 'auth':
+            flow(auth, [pnr_or_order_ref, '123.123.123.123'], launch_native_app)
+        elif operation == 'sign':
+            flow(sign, [pnr_or_order_ref, '123.123.123.123', 'Test text for signing'], launch_native_app)
+        elif operation == 'cancel':
+            cancel(pnr_or_order_ref)
+    except ValueError as e:
+        print(e)
